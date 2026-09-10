@@ -1,0 +1,64 @@
+/* src/styles/glass.css */
+
+/* 
+  PREMIUM GLASS / LIQUID GLASS
+  Material qualities:
+  - layered translucency
+  - soft environmental response
+  - extremely subtle edge highlights
+  - minimal but effective blur
+  - slight separation from background
+*/
+
+.glass-primary {
+  background: var(--glass-bg-primary);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border-primary);
+  border-top-color: var(--glass-border-highlight);
+  box-shadow: var(--glass-shadow-float);
+}
+
+.glass-secondary {
+  background: var(--glass-bg-secondary);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border-secondary);
+  border-top-color: var(--glass-border-primary);
+  box-shadow: var(--glass-shadow-subtle);
+}
+
+.glass-tertiary {
+  background: var(--glass-bg-tertiary);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid var(--glass-border-tertiary);
+}
+
+.glass-hover-effect {
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.glass-hover-effect:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--glass-shadow-float);
+}
+
+/* Legacy support to smooth transition */
+.glass-panel {
+  background: var(--glass-bg-primary);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border-secondary);
+  border-top-color: var(--glass-border-primary);
+  box-shadow: var(--glass-shadow-subtle);
+}
+
+.glass-panel-hover:hover {
+  border-color: var(--glass-border-highlight);
+  transform: translateY(-2px);
+  box-shadow: var(--glass-shadow-float);
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
