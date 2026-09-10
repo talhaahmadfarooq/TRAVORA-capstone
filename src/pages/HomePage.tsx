@@ -7,6 +7,7 @@ import { DestinationCards } from '../components/globe/DestinationCards';
 import { AuthCabin } from '../components/globe/AuthCabin';
 import { Map2D } from '../components/globe/Map2D';
 import { Button } from '../components/ui/Button';
+import { CinematicLoader } from '../components/ui/CinematicLoader';
 import { mockDestinations } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
@@ -21,8 +22,12 @@ export function HomePage() {
   const [selectedDestId, setSelectedDestId] = useState<string | null>(null);
   const [flightProgress, setFlightProgress] = useState(0);
   const [flightData, setFlightData] = useState<{ startLat: number, startLng: number, endLat: number, endLng: number } | null>(null);
-  const { setCinematicState, homeResetCounter } = useNavigation();
 
+  // appInitialized lives in NavigationContext (app-level) — survives route changes.
+  // The cinematic loader only runs once per app session, NOT on every Home remount.
+  const { setCinematicState, homeResetCounter, appInitialized, setAppInitialized } = useNavigation();
+
+  // Reset journey state when returning Home via navbar
   useEffect(() => {
     if (homeResetCounter > 0) {
       setAppState('INTRO');
@@ -32,10 +37,12 @@ export function HomePage() {
     }
   }, [homeResetCounter]);
 
+  // Sync navbar cinematic state
   useEffect(() => {
     setCinematicState(appState === 'INTRO');
   }, [appState, setCinematicState]);
 
+  // Flight progress animation
   useEffect(() => {
     let animationFrame: number;
     if (appState === 'CALCULATING') {
@@ -63,23 +70,22 @@ export function HomePage() {
 
   const handleExploreClick = () => {
     setAppState('EXPLORE');
+    // Camera pullback begins immediately — GlobeScene reads 'EXPLORE' as journey camera state
   };
 
   const handleSearch = (originQuery: string, destQuery: string) => {
     let originDest = mockDestinations.find(d => d.name.toLowerCase() === originQuery.toLowerCase());
     let targetDest = mockDestinations.find(d => d.name.toLowerCase() === destQuery.toLowerCase());
     
-    // If the user has explicitly clicked/selected a destination card or globe marker,
-    // ensure the route correctly targets their selection instead of the hardcoded text default.
     if (selectedDestId) {
       const activeSelection = mockDestinations.find(d => d.id === selectedDestId);
       if (activeSelection) targetDest = activeSelection;
     }
     
     setFlightData({
-      startLat: originDest ? originDest.coordinates[0] : 31.5204, // default Lahore
+      startLat: originDest ? originDest.coordinates[0] : 31.5204,
       startLng: originDest ? originDest.coordinates[1] : 74.3587,
-      endLat: targetDest ? targetDest.coordinates[0] : 35.6762,   // default Tokyo
+      endLat: targetDest ? targetDest.coordinates[0] : 35.6762,
       endLng: targetDest ? targetDest.coordinates[1] : 139.6503,
     });
     
@@ -96,7 +102,7 @@ export function HomePage() {
           onClick={() => setViewMode('3D')}
           style={{
             padding: '8px 16px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600,
-            background: viewMode === '3D' ? 'transparent' : 'transparent',
+            background: 'transparent',
             boxShadow: viewMode === '3D' ? 'var(--neu-pressed)' : 'none',
             color: viewMode === '3D' ? 'var(--color-accent-cyan)' : 'var(--color-text-secondary)',
           }}
@@ -105,26 +111,27 @@ export function HomePage() {
           onClick={() => setViewMode('2D')}
           style={{
             padding: '8px 16px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600,
-            background: viewMode === '2D' ? 'transparent' : 'transparent',
+            background: 'transparent',
             boxShadow: viewMode === '2D' ? 'var(--neu-pressed)' : 'none',
             color: viewMode === '2D' ? 'var(--color-accent-cyan)' : 'var(--color-text-secondary)',
           }}
         >2D</button>
       </div>
 
-      {/* Main Canvas/Map Area */}
+      {/* 3D Globe Canvas */}
       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', transition: 'opacity 0.5s ease', opacity: viewMode === '3D' ? 1 : 0, pointerEvents: viewMode === '3D' ? 'auto' : 'none' }}>
         <ErrorBoundary fallback={<div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'var(--color-text-secondary)' }}>3D Context Lost. Please refresh.</div>}>
           <GlobeScene 
             appState={appState} 
             selectedDestinationId={selectedDestId}
-            onDestinationClick={(id) => setSelectedDestId(id)}
+            onDestinationClick={(id) => setSelectedDestId(prev => prev === id ? null : id)}
             flightData={flightData} 
             flightProgress={flightProgress} 
           />
         </ErrorBoundary>
       </div>
 
+      {/* 2D Map */}
       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', transition: 'opacity 0.5s ease', opacity: viewMode === '2D' ? 1 : 0, pointerEvents: viewMode === '2D' ? 'auto' : 'none' }}>
         {viewMode === '2D' && (
           <Map2D 
@@ -135,19 +142,19 @@ export function HomePage() {
         )}
       </div>
 
-      {/* Cinematic Authentication Overlay */}
+      {/* Auth overlay */}
       <AuthCabin isOpen={isLoginOpen} onClose={() => setLoginOpen(false)} />
 
       {/* UI Overlay */}
       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px' }}>
         
-        {/* INTRO STATE */}
+        {/* INTRO STATE — hidden until appInitialized (first load) or shown immediately on return */}
         <div style={{
           position: 'absolute', top: '15%', display: 'flex', flexDirection: 'column', alignItems: 'center',
           transition: 'all 0.8s ease',
-          opacity: appState === 'INTRO' ? 1 : 0,
+          opacity: appState === 'INTRO' && appInitialized ? 1 : 0,
           transform: appState === 'INTRO' ? 'translateY(0)' : 'translateY(-40px)',
-          pointerEvents: appState === 'INTRO' ? 'auto' : 'none'
+          pointerEvents: appState === 'INTRO' && appInitialized ? 'auto' : 'none'
         }}>
           <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '5rem', letterSpacing: '0.2em', margin: '0 0 16px 0', color: 'var(--color-text-primary)' }}>
             TRAVORA
@@ -174,12 +181,16 @@ export function HomePage() {
           </Button>
         </div>
 
-        {/* EXPLORE STATE (Search Panel & Cards) */}
+        {/* EXPLORE STATE — horizontal search bar, bottom-center like the reference */}
         <div style={{
-          position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '10%',
-          transition: 'all 0.8s ease',
+          position: 'absolute',
+          bottom: '10%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          transition: 'all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)',
           opacity: appState === 'EXPLORE' || appState === 'CALCULATING' ? 1 : 0,
-          pointerEvents: appState === 'EXPLORE' ? 'auto' : 'none'
+          pointerEvents: appState === 'EXPLORE' ? 'auto' : 'none',
+          zIndex: 20,
         }}>
           <JourneySearchPanel onSearch={handleSearch} appState={appState} />
         </div>
@@ -242,10 +253,14 @@ export function HomePage() {
         </div>
 
       </div>
+
+      {/* CINEMATIC STARTUP LOADER
+          - Only shown on first app load (appInitialized === false)
+          - After onComplete fires, appInitialized becomes true at context level
+          - Subsequent Home mounts skip this entirely */}
+      {!appInitialized && (
+        <CinematicLoader onComplete={() => setAppInitialized(true)} />
+      )}
     </div>
   );
 }
-
-
-
-

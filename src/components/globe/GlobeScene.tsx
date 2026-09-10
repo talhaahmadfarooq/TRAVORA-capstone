@@ -40,8 +40,8 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
   useEffect(() => {
     const handlePointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
-      // Prevent dragging before Find My Journey
-      if (appState === 'INTRO' || appState === 'EXPLORE') return;
+      // Prevent dragging only during the initial cinematic Hero
+      if (appState === 'INTRO') return;
       
       isDragging.current = true;
       previousPointer.current = { x: e.clientX, y: e.clientY };
@@ -81,7 +81,8 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      if (appState !== 'CALCULATING' && appState !== 'RESULT') return;
+      // Prevent zooming only during the initial cinematic Hero
+      if (appState === 'INTRO') return;
       e.preventDefault();
       cameraZoomTarget.current = THREE.MathUtils.clamp(
         cameraZoomTarget.current + e.deltaY * 0.01,
@@ -137,7 +138,10 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
     let targetPos = new THREE.Vector3();
     let targetLookAt = new THREE.Vector3(0, 0, 0);
 
-    const earthCameraState = (appState === 'INTRO' || appState === 'EXPLORE') ? 'hero' : 'journey';
+    // CRITICAL FIX: Only INTRO keeps the hero close-up composition.
+    // EXPLORE, CALCULATING, RESULT all immediately use the journey camera (full pullback).
+    // This means clicking "Find My Next Journey" (INTRO→EXPLORE) triggers the pullback right away.
+    const earthCameraState = appState === 'INTRO' ? 'hero' : 'journey';
 
     if (earthCameraState === 'hero') {
       // HERO: Earth sits dramatically low/large. Camera close, looking up.
@@ -151,7 +155,7 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
     }
 
     camera.position.lerp(targetPos, 0.05);
-    // lookAt lerps faster (0.08) so Earth re-centers quickly and avoids cut-off during transition
+    // lookAt lerps faster (0.08) so Earth re-centers quickly during transition
     lookAtTarget.current.lerp(targetLookAt, 0.08);
     camera.lookAt(lookAtTarget.current);
   });
@@ -182,7 +186,18 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
               <mesh 
                 onPointerOver={(e) => { e.stopPropagation(); setHoveredDest(loc.id); document.body.style.cursor = 'pointer'; }}
                 onPointerOut={(e) => { e.stopPropagation(); setHoveredDest(null); document.body.style.cursor = 'auto'; }}
-                onClick={(e) => { e.stopPropagation(); if (onDestinationClick) onDestinationClick(loc.id); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onDestinationClick) {
+                    onDestinationClick(loc.id);
+                    // If this is the currently selected marker, we're deselecting it.
+                    // Also clear hover so the label visually disappears immediately
+                    // (without this, isHovered keeps the label visible after deselect).
+                    if (selectedDestinationId === loc.id) {
+                      setHoveredDest(null);
+                    }
+                  }
+                }}
               >
                 <sphereGeometry args={[isSelected || isHovered ? 0.04 : 0.02, 16, 16]} />
                 <meshBasicMaterial color={isSelected ? "#e2b170" : (isHovered ? "#ffffff" : "#38bdf8")} />
@@ -197,23 +212,40 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
 
               {/* Tooltip on hover */}
               {(isHovered || isSelected) && (
-                <Html distanceFactor={15} center style={{ pointerEvents: 'none' }}>
+                <Html distanceFactor={20} center style={{ pointerEvents: 'none' }}>
                   <div style={{
-                    color: 'var(--color-text-primary)',
-                    background: 'rgba(15, 23, 42, 0.8)',
-                    backdropFilter: 'blur(8px)',
-                    padding: '6px 14px',
-                    borderRadius: '24px',
-                    border: `1px solid ${isSelected ? 'rgba(226, 177, 112, 0.4)' : 'rgba(255,255,255,0.1)'}`,
-                    fontSize: '11px',
-                    fontWeight: 500,
-                    transform: 'translateY(-28px)',
+                    transform: 'translateY(-22px)',
                     whiteSpace: 'nowrap',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                    letterSpacing: '0.05em',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                    textAlign: 'center',
+                    userSelect: 'none',
                   }}>
-                    {loc.name}
+                    <div style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        letterSpacing: '0.10em',
+                        color: 'rgba(255,255,255,0.92)',
+                        textTransform: 'uppercase',
+                        textShadow: '0 1px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5)',
+                        lineHeight: 1.3,
+                      }}>
+                        {loc.name}
+                      </div>
+                      <div style={{
+                        fontSize: '8px',
+                        fontWeight: 400,
+                        letterSpacing: '0.08em',
+                        color: 'rgba(255,255,255,0.48)',
+                        textTransform: 'uppercase',
+                        textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+                        marginTop: '1px',
+                      }}>
+                      {loc.name === 'Tokyo' ? 'Japan' :
+                       loc.name === 'Paris' ? 'France' :
+                       loc.name === 'New York' ? 'USA' :
+                       loc.name === 'Dubai' ? 'UAE' :
+                       loc.name === 'Lahore' ? 'Pakistan' :
+                       loc.name === 'Switzerland' ? 'Switzerland' : ''}
+                    </div>
                   </div>
                 </Html>
               )}

@@ -1,4 +1,4 @@
-﻿import { useMemo, useEffect, useRef } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -50,9 +50,11 @@ export function Earth() {
       
       const center = box.getCenter(new THREE.Vector3());
       clonedScene.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+      window.dispatchEvent(new CustomEvent('earth-ready'));
     } else {
       console.warn("Earth bounds invalid on mount. Using fallback scale.");
       clonedScene.scale.set(0.02, 0.02, 0.02); // Fallback to prevent NaN
+      window.dispatchEvent(new CustomEvent('earth-ready'));
     }
   }, [clonedScene, scene]);
 
