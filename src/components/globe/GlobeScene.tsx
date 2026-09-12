@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { Earth } from './Earth';
 import { FlightRoute } from './FlightRoute';
 import { Aircraft } from './Aircraft';
+import { SpaceEnvironment } from './SpaceEnvironment';
 import { latLongToVector3 } from '../../utils/globeMath';
 import { Suspense } from 'react';
 
@@ -36,6 +37,7 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
   
   const isDragging = useRef(false);
   const previousPointer = useRef({ x: 0, y: 0 });
+  const spaceRotationRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const handlePointerDown = (e: PointerEvent) => {
@@ -57,6 +59,14 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
       
       rotationGroupRef.current.rotation.y += deltaX * 0.005;
       rotationGroupRef.current.rotation.x += deltaY * 0.005;
+
+      // Immediate proportional response to user interaction (frame-synchronized with Earth)
+      spaceRotationRef.current.y += deltaX * 0.0022;
+      spaceRotationRef.current.x = THREE.MathUtils.clamp(
+        spaceRotationRef.current.x + deltaY * 0.0016,
+        -Math.PI / 5,
+        Math.PI / 5
+      );
       
       rotationGroupRef.current.rotation.x = THREE.MathUtils.clamp(
         rotationGroupRef.current.rotation.x,
@@ -122,6 +132,9 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
     if (!isDragging.current) {
       if (appState === 'CALCULATING' && targetRotation) {
         const currentRot = rotationGroupRef.current.rotation;
+        const prevRotY = currentRot.y;
+        const prevRotX = currentRot.x;
+
         // Smoothly interpolate X and Y Euler angles to keep Earth upright
         currentRot.x = THREE.MathUtils.lerp(currentRot.x, targetRotation.x, 2.5 * delta);
         // Determine shortest path for Y rotation
@@ -129,6 +142,16 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
         while (diffY > Math.PI) diffY -= 2 * Math.PI;
         while (diffY < -Math.PI) diffY += 2 * Math.PI;
         currentRot.y += diffY * (2.5 * delta);
+
+        // Keep space environment synchronized with Earth destination focus
+        const dY = currentRot.y - prevRotY;
+        const dX = currentRot.x - prevRotX;
+        spaceRotationRef.current.y += dY * 0.44;
+        spaceRotationRef.current.x = THREE.MathUtils.clamp(
+          spaceRotationRef.current.x + dX * 0.32,
+          -Math.PI / 5,
+          Math.PI / 5
+        );
       } else {
         rotationGroupRef.current.rotation.y += delta * autoRotateSpeed.current;
       }
@@ -166,6 +189,10 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
 
   return (
     <>
+      <Suspense fallback={null}>
+        <SpaceEnvironment dragRotation={spaceRotationRef} />
+      </Suspense>
+
       <ambientLight intensity={1.5} color="#ffffff" />
       <directionalLight position={[10, 10, 5]} intensity={2.5} color="#ffffff" />
       <directionalLight position={[-10, -10, -5]} intensity={1.0} color="#38bdf8" />
@@ -276,7 +303,7 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
 export function GlobeScene(props: GlobeSceneProps) {
   return (
     <Canvas 
-      camera={{ position: [0, 0.2, 3.2], fov: 45 }}
+      camera={{ position: [0, 0.2, 3.2], fov: 45, near: 0.1, far: 2000 }}
       style={{ touchAction: 'none' }} 
       gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}
     >
