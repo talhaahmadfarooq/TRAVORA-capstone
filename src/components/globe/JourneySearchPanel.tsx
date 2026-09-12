@@ -345,6 +345,9 @@ export function JourneySearchPanel({ onSearch, appState }: JourneySearchPanelPro
     border: 'none', cursor: 'pointer',
     borderRadius: '12px', transition: 'background 0.15s ease',
     position: 'relative',
+    height: '100%',
+    width: '100%',
+    justifyContent: 'center',
   });
 
   const dividerStyle: React.CSSProperties = {
@@ -379,7 +382,7 @@ export function JourneySearchPanel({ onSearch, appState }: JourneySearchPanelPro
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'stretch',
             width: 'clamp(580px, 68vw, 780px)',
             height: '72px',
             borderRadius: '18px',
@@ -501,7 +504,7 @@ export function JourneySearchPanel({ onSearch, appState }: JourneySearchPanelPro
           </div>
 
           {/* SUBMIT ARROW */}
-          <div style={{ flexShrink: 0, padding: '0 10px 0 8px' }}>
+          <div style={{ flexShrink: 0, padding: '0 10px 0 8px', alignSelf: 'center' }}>
             <button
               onClick={() => onSearch(origin, destination)}
               style={{

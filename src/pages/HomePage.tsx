@@ -184,7 +184,7 @@ export function HomePage() {
         {/* EXPLORE STATE — horizontal search bar, bottom-center like the reference */}
         <div style={{
           position: 'absolute',
-          bottom: '10%',
+          bottom: '130px',
           left: '50%',
           transform: 'translateX(-50%)',
           transition: 'all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)',
