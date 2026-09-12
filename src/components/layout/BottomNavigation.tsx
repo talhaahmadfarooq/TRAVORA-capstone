@@ -169,7 +169,10 @@ export function BottomNavigation() {
               to={item.path}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
-              onClick={() => { if (item.path === '/') triggerHomeReset(); }}
+              onClick={() => { 
+                setHoveredIndex(null);
+                if (item.path === '/') triggerHomeReset(); 
+              }}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -184,6 +187,8 @@ export function BottomNavigation() {
                 // for the ghost glow: remove every independent light source per item.
                 background: 'transparent',
                 border: 'none',
+                outline: 'none',
+                WebkitTapHighlightColor: 'transparent',
                 transition: 'all 0.2s ease',
               }}
             >

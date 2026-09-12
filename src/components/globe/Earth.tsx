@@ -64,7 +64,8 @@ export function Earth() {
     }
   });
 
-  return <primitive object={clonedScene} />;
+  // Rotate the earth model by +90 degrees around Y axis so its Prime Meridian aligns with the math coordinate system
+  return <primitive object={clonedScene} rotation={[0, Math.PI / 2, 0]} />;
 }
 
 useGLTF.preload('/models/earth/earth.glb');

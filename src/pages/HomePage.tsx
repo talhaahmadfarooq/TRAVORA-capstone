@@ -22,6 +22,7 @@ export function HomePage() {
   const [selectedDestId, setSelectedDestId] = useState<string | null>(null);
   const [flightProgress, setFlightProgress] = useState(0);
   const [flightData, setFlightData] = useState<{ startLat: number, startLng: number, endLat: number, endLng: number } | null>(null);
+  const [isTrendingOpen, setIsTrendingOpen] = useState(false);
 
   // appInitialized lives in NavigationContext (app-level) — survives route changes.
   // The cinematic loader only runs once per app session, NOT on every Home remount.
@@ -196,15 +197,56 @@ export function HomePage() {
         </div>
 
         <div style={{
-          position: 'absolute', top: '90px', right: '16px',
+          position: 'absolute', top: '90px', right: '5%',
           pointerEvents: appState === 'EXPLORE' ? 'auto' : 'none',
           transition: 'opacity 0.6s ease',
           opacity: appState === 'EXPLORE' ? 1 : 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          zIndex: 50
         }}>
+          {/* Minimalist Trending Toggle */}
+          <button 
+            onClick={() => setIsTrendingOpen(!isTrendingOpen)}
+            style={{
+              background: isTrendingOpen ? 'rgba(255,255,255,0.1)' : 'rgba(10,15,25,0.6)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              color: 'var(--color-text-primary)',
+              padding: '8px 16px',
+              borderRadius: '999px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              transition: 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
+              marginBottom: '16px',
+              outline: 'none',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <span style={{ 
+              width: '6px', 
+              height: '6px', 
+              borderRadius: '50%', 
+              background: 'var(--color-accent-gold)',
+              boxShadow: '0 0 8px var(--color-accent-gold)'
+            }} />
+            Trending
+          </button>
+          
           <DestinationCards 
             appState={appState} 
             selectedId={selectedDestId} 
-            onSelect={(id) => setSelectedDestId(id)} 
+            onSelect={(id) => setSelectedDestId(prev => prev === id ? null : id)} 
+            isOpen={isTrendingOpen}
           />
         </div>
 

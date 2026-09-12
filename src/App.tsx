@@ -6,6 +6,7 @@ import { ScrollToTop } from './components/layout/ScrollToTop';
 // Pages
 import { HomePage } from './pages/HomePage';
 import { ExplorePage } from './pages/ExplorePage';
+import { DestinationDetailPage } from './pages/DestinationDetailPage';
 import { FlightsPage } from './pages/FlightsPage';
 import { StaysPage } from './pages/StaysPage';
 import { StayDetailPage } from './pages/StayDetailPage';
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />
             <Route path="explore" element={<ExplorePage />} />
+            <Route path="destination/:id" element={<DestinationDetailPage />} />
             <Route path="flights" element={<FlightsPage />} />
             <Route path="stays" element={<StaysPage />} />
             <Route path="stays/:id" element={<StayDetailPage />} />

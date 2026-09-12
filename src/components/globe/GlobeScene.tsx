@@ -8,15 +8,14 @@ import { Aircraft } from './Aircraft';
 import { SpaceEnvironment } from './SpaceEnvironment';
 import { latLongToVector3 } from '../../utils/globeMath';
 import { Suspense } from 'react';
+import { mockDestinations } from '../../data/mockData';
 
-export const GLOBE_LOCATIONS = [
-  { id: 'tokyo', name: 'Tokyo', lat: 35.6762, lng: 139.6503 },
-  { id: 'paris', name: 'Paris', lat: 48.8566, lng: 2.3522 },
-  { id: 'newyork', name: 'New York', lat: 40.7128, lng: -74.0060 },
-  { id: 'dubai', name: 'Dubai', lat: 25.2048, lng: 55.2708 },
-  { id: 'lahore', name: 'Lahore', lat: 31.5204, lng: 74.3587 },
-  { id: 'switzerland', name: 'Switzerland', lat: 46.8182, lng: 8.2275 }
-];
+export const GLOBE_LOCATIONS = mockDestinations.map(d => ({
+  id: d.id,
+  name: d.name,
+  lat: d.coordinates[0],
+  lng: d.coordinates[1]
+}));
 
 interface GlobeSceneProps {
   appState: 'INTRO' | 'EXPLORE' | 'CALCULATING' | 'RESULT';
@@ -42,7 +41,6 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
   useEffect(() => {
     const handlePointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
-      // Prevent dragging only during the initial cinematic Hero
       if (appState === 'INTRO') return;
       
       isDragging.current = true;
@@ -60,7 +58,6 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
       rotationGroupRef.current.rotation.y += deltaX * 0.005;
       rotationGroupRef.current.rotation.x += deltaY * 0.005;
 
-      // Immediate proportional response to user interaction (frame-synchronized with Earth)
       spaceRotationRef.current.y += deltaX * 0.0022;
       spaceRotationRef.current.x = THREE.MathUtils.clamp(
         spaceRotationRef.current.x + deltaY * 0.0016,
@@ -91,13 +88,12 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      // Prevent zooming only during the initial cinematic Hero
       if (appState === 'INTRO') return;
       e.preventDefault();
       cameraZoomTarget.current = THREE.MathUtils.clamp(
         cameraZoomTarget.current + e.deltaY * 0.01,
-        5.0,   // closest zoom-in
-        12.0   // furthest zoom-out
+        5.0,
+        12.0
       );
     };
     window.addEventListener('wheel', handleWheel, { passive: false });
@@ -105,12 +101,11 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
   }, [appState]);
 
   const lookAtTarget = useRef(new THREE.Vector3(0, 0, 0));
-  const autoRotateSpeed = useRef(0.065); // Default idle speed (20-30% faster than 0.05)
+  const autoRotateSpeed = useRef(0.065);
 
   useFrame((state, delta) => {
     if (!rotationGroupRef.current) return;
     
-    // Smoothly adjust auto rotation speed based on state
     const targetSpeed = (appState === 'CALCULATING' || appState === 'RESULT') ? 0.08 : 0.065;
     autoRotateSpeed.current = THREE.MathUtils.lerp(autoRotateSpeed.current, targetSpeed, 0.05);
 
@@ -118,7 +113,6 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
     if (flightData && (appState === 'CALCULATING' || appState === 'RESULT')) {
       const midLat = (flightData.startLat + flightData.endLat) / 2;
       let midLng = (flightData.startLng + flightData.endLng) / 2;
-      // Handle dateline crossing
       if (Math.abs(flightData.startLng - flightData.endLng) > 180) {
         midLng += 180;
         if (midLng > 180) midLng -= 360;
@@ -135,15 +129,12 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
         const prevRotY = currentRot.y;
         const prevRotX = currentRot.x;
 
-        // Smoothly interpolate X and Y Euler angles to keep Earth upright
         currentRot.x = THREE.MathUtils.lerp(currentRot.x, targetRotation.x, 2.5 * delta);
-        // Determine shortest path for Y rotation
         let diffY = targetRotation.y - currentRot.y;
         while (diffY > Math.PI) diffY -= 2 * Math.PI;
         while (diffY < -Math.PI) diffY += 2 * Math.PI;
         currentRot.y += diffY * (2.5 * delta);
 
-        // Keep space environment synchronized with Earth destination focus
         const dY = currentRot.y - prevRotY;
         const dX = currentRot.x - prevRotX;
         spaceRotationRef.current.y += dY * 0.44;
@@ -161,29 +152,22 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
     let targetPos = new THREE.Vector3();
     let targetLookAt = new THREE.Vector3(0, 0, 0);
 
-    // CRITICAL FIX: Only INTRO keeps the hero close-up composition.
-    // EXPLORE, CALCULATING, RESULT all immediately use the journey camera (full pullback).
-    // This means clicking "Find My Next Journey" (INTRO→EXPLORE) triggers the pullback right away.
     const earthCameraState = appState === 'INTRO' ? 'hero' : 'journey';
 
     if (earthCameraState === 'hero') {
-      // HERO: Earth sits dramatically low/large. Camera close, looking up.
-      cameraZoomTarget.current = 8.0; // reset zoom when returning to hero
+      cameraZoomTarget.current = 8.0;
       targetPos.set(0, 0.2, 3.2);
       targetLookAt.set(0, 1.6, 0); 
     } else {
-      // JOURNEY: Camera pulls well back so the full Earth sphere is visible.
       targetPos.set(0, 0, cameraZoomTarget.current);
       targetLookAt.set(0, 0, 0);
     }
 
     camera.position.lerp(targetPos, 0.05);
-    // lookAt lerps faster (0.08) so Earth re-centers quickly during transition
     lookAtTarget.current.lerp(targetLookAt, 0.08);
     camera.lookAt(lookAtTarget.current);
   });
 
-  // Calculate actual active destinations so they highlight correctly
   const activeOriginId = flightData ? GLOBE_LOCATIONS.find(l => Math.abs(l.lat - flightData.startLat) < 0.1)?.id : null;
   const activeDestId = flightData ? GLOBE_LOCATIONS.find(l => Math.abs(l.lat - flightData.endLat) < 0.1)?.id : null;
 
@@ -204,7 +188,6 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
         {GLOBE_LOCATIONS.map(loc => {
           const pos = latLongToVector3(loc.lat, loc.lng, 2.02);
           
-          // Destination highlights
           const isSelected = selectedDestinationId === loc.id || activeDestId === loc.id || activeOriginId === loc.id;
           const isHovered = hoveredDest === loc.id;
           
@@ -217,9 +200,6 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
                   e.stopPropagation();
                   if (onDestinationClick) {
                     onDestinationClick(loc.id);
-                    // If this is the currently selected marker, we're deselecting it.
-                    // Also clear hover so the label visually disappears immediately
-                    // (without this, isHovered keeps the label visible after deselect).
                     if (selectedDestinationId === loc.id) {
                       setHoveredDest(null);
                     }
@@ -237,7 +217,6 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
                 </mesh>
               )}
 
-              {/* Tooltip on hover */}
               {(isHovered || isSelected) && (
                 <Html distanceFactor={20} center style={{ pointerEvents: 'none' }}>
                   <div style={{
@@ -257,22 +236,6 @@ function SceneContent({ appState, selectedDestinationId, flightData, flightProgr
                       }}>
                         {loc.name}
                       </div>
-                      <div style={{
-                        fontSize: '8px',
-                        fontWeight: 400,
-                        letterSpacing: '0.08em',
-                        color: 'rgba(255,255,255,0.48)',
-                        textTransform: 'uppercase',
-                        textShadow: '0 1px 3px rgba(0,0,0,0.9)',
-                        marginTop: '1px',
-                      }}>
-                      {loc.name === 'Tokyo' ? 'Japan' :
-                       loc.name === 'Paris' ? 'France' :
-                       loc.name === 'New York' ? 'USA' :
-                       loc.name === 'Dubai' ? 'UAE' :
-                       loc.name === 'Lahore' ? 'Pakistan' :
-                       loc.name === 'Switzerland' ? 'Switzerland' : ''}
-                    </div>
                   </div>
                 </Html>
               )}
@@ -313,6 +276,3 @@ export function GlobeScene(props: GlobeSceneProps) {
     </Canvas>
   );
 }
-
-
-

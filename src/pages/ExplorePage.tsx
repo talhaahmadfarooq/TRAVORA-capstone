@@ -1,249 +1,158 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { mockDestinations } from '../data/mockData';
-import { useTrip } from '../context/TripContext';
-import { useToast } from '../components/ui/Toast';
-import { ImageWithFallback } from '../components/ui/ImageWithFallback';
-import { Search, Bookmark } from 'lucide-react';
-import { GlassSurface } from '../components/ui/GlassSurface';
+import { Search } from 'lucide-react';
 import { GlassInput } from '../components/ui/GlassInput';
-import { Display, Heading, Body, Meta, Label } from '../components/ui/Typography';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Heading, Body, Label } from '../components/ui/Typography';
 
 export function ExplorePage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeIndex, setActiveIndex] = useState(0);
-  const { toggleFavorite, isFavorite } = useTrip();
-  const { toast } = useToast();
-  const carouselRef = useRef<HTMLDivElement>(null);
-
-  // Drag support refs
-  const dragStartX = useRef<number | null>(null);
-  const isDraggingCarousel = useRef(false);
+  const navigate = useNavigate();
 
   const filteredDestinations = mockDestinations.filter(d => 
     d.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     d.country.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const activeDestination = filteredDestinations[activeIndex] || filteredDestinations[0];
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName === 'INPUT') return;
-      if (e.key === 'ArrowRight') {
-        setActiveIndex(prev => Math.min(prev + 1, filteredDestinations.length - 1));
-      } else if (e.key === 'ArrowLeft') {
-        setActiveIndex(prev => Math.max(prev - 1, 0));
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [filteredDestinations.length]);
-
-  const handleFavoriteClick = (e: React.MouseEvent, id: string, name: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleFavorite('destination', id);
-    const isNowFav = !isFavorite('destination', id);
-    toast(isNowFav ? `${name} added to favorites` : `${name} removed from favorites`, 'success');
-  };
-
-
-  if (!activeDestination && filteredDestinations.length === 0) {
-    return (
-      <div style={{ paddingTop: '100px', padding: '24px', textAlign: 'center' }}>
-        <GlassInput 
-          icon={<Search size={20} />} 
-          placeholder="Search destinations..." 
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ maxWidth: '400px', margin: '0 auto 40px auto' }}
-        />
-        <Body>No destinations found.</Body>
-      </div>
-    );
-  }
+  const featured = filteredDestinations.slice(0, 2);
+  const trending = filteredDestinations.slice(2, 6);
+  const regions = filteredDestinations.slice(6);
 
   return (
     <div style={{ 
-      position: 'relative', 
       width: '100vw', 
       minHeight: '100vh', 
-      overflow: 'hidden',
-      background: 'var(--color-bg)'
+      background: 'var(--neu-bg)',
+      color: 'var(--color-text-primary)',
+      paddingTop: '120px',
+      paddingBottom: '80px',
+      overflowX: 'hidden'
     }}>
-      {/* Background Hero Image with AnimatePresence */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeDestination.id}
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
-          style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            zIndex: 0
-          }}
-        >
-          <img 
-            src={activeDestination.heroImage} 
-            alt={activeDestination.name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-          <div style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.1) 100%)'
-          }} />
-        </motion.div>
-      </AnimatePresence>
-
-      <div style={{ 
-        position: 'relative', 
-        zIndex: 10, 
-        paddingTop: '120px', 
-        paddingBottom: '40px',
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center'
-      }}>
+      <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '0 5%' }}>
         
-        {/* Top Search Bar */}
-        <div style={{ position: 'absolute', top: '100px', left: '24px', right: '24px', zIndex: 20 }}>
-          <div style={{ maxWidth: '400px', marginLeft: '5%' }}>
+        {/* Header & Search */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '80px', textAlign: 'center' }}>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '3.5rem', marginBottom: '16px' }}>
+            Discover the Extraordinary
+          </h1>
+          <Body style={{ color: 'var(--color-text-secondary)', maxWidth: '600px', marginBottom: '40px' }}>
+            From ancient ruins whispered about in legends to futuristic neon-lit skylines, explore our curated selection of global experiences.
+          </Body>
+          <div style={{ width: '100%', maxWidth: '600px' }}>
             <GlassInput 
               icon={<Search size={20} />} 
-              placeholder="Search destinations, countries..." 
+              placeholder="Search destinations, countries, or regions..." 
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setActiveIndex(0);
-              }}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          
-          {/* Left Side: Destination Info */}
-          <div style={{ width: '40%', paddingLeft: '6%', paddingRight: '4%' }}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`info-${activeDestination.id}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
-              >
-                <Label style={{ display: 'block', marginBottom: '16px', color: 'rgba(255,255,255,0.7)' }}>
-                  {activeDestination.country}
-                </Label>
-                <Display style={{ textTransform: 'uppercase', marginBottom: '24px' }}>
-                  {activeDestination.name}
-                </Display>
-                <Body style={{ maxWidth: '450px', marginBottom: '24px', color: 'rgba(255,255,255,0.9)' }}>
-                  {activeDestination.description}
-                </Body>
-              </motion.div>
-            </AnimatePresence>
+        {filteredDestinations.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '100px 0', color: 'var(--color-text-secondary)' }}>
+            No destinations found matching your search.
           </div>
-
-          {/* Right Side: Horizontal Carousel with drag support */}
-          <div
-            style={{ width: '60%', height: '60vh', overflow: 'hidden', cursor: 'grab', userSelect: 'none' }}
-            onMouseDown={(e) => { dragStartX.current = e.clientX; isDraggingCarousel.current = false; }}
-            onMouseMove={() => { if (dragStartX.current !== null) isDraggingCarousel.current = true; }}
-            onMouseUp={(e) => {
-              if (dragStartX.current !== null) {
-                const diff = e.clientX - dragStartX.current;
-                if (Math.abs(diff) > 50) {
-                  if (diff < 0) setActiveIndex(prev => Math.min(prev + 1, filteredDestinations.length - 1));
-                  else setActiveIndex(prev => Math.max(prev - 1, 0));
-                }
-                dragStartX.current = null;
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (dragStartX.current !== null) {
-                const diff = e.clientX - dragStartX.current;
-                if (Math.abs(diff) > 50) {
-                  if (diff < 0) setActiveIndex(prev => Math.min(prev + 1, filteredDestinations.length - 1));
-                  else setActiveIndex(prev => Math.max(prev - 1, 0));
-                }
-                dragStartX.current = null;
-              }
-            }}
-          >
-            <div 
-              ref={carouselRef}
-              style={{ 
-                display: 'flex',
-                gap: '24px',
-                transform: `translateX(calc(-${activeIndex} * 304px))`,
-                transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                paddingLeft: '24px',
-                alignItems: 'center',
-                height: '100%',
-                willChange: 'transform',
-              }}
-            >
-              {filteredDestinations.map((dest, idx) => {
-                const isActive = idx === activeIndex;
-                return (
-                  <motion.div 
-                    key={dest.id}
-                    onClick={() => setActiveIndex(idx)}
-                    style={{ 
-                      flexShrink: 0, 
-                      width: isActive ? '340px' : '280px', 
-                      height: isActive ? '480px' : '400px',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      borderRadius: '16px',
-                      overflow: 'hidden',
-                      transition: 'all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)'
-                    }}
-                  >
-                    <ImageWithFallback 
-                      src={dest.gallery[0] || dest.heroImage} 
-                      alt={dest.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    
-                    {/* Glass Overlay on Card */}
-                    <div style={{
-                      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                      background: isActive ? 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 50%)' : 'rgba(0,0,0,0.4)',
-                      transition: 'background 0.3s'
-                    }}>
-                      <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: '100%', flexDirection: 'column' }}>
-                        
-                        {/* Top Meta */}
-                        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Label style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{dest.country}</Label>
-                          <GlassSurface variant="tertiary" style={{ borderRadius: '50%', padding: '8px' }} onClick={(e) => handleFavoriteClick(e, dest.id, dest.name)}>
-                            <Bookmark size={18} fill={isFavorite('destination', dest.id) ? 'white' : 'none'} color="white" />
-                          </GlassSurface>
-                        </div>
-                        
-                        {/* Bottom Info */}
-                        {isActive && (
-                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-                            <Heading as="h3" style={{ fontSize: '1.5rem', marginBottom: '4px' }}>{dest.name}</Heading>
-                            <Meta>{dest.category}</Meta>
-                          </motion.div>
-                        )}
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '80px' }}>
+            
+            {/* FEATURED SECTION */}
+            {featured.length > 0 && (
+              <section>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+                  <Heading as="h2" style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem' }}>Featured Journeys</Heading>
+                </div>
+                <div style={{ display: 'flex', gap: '32px' }}>
+                  {featured.map(dest => (
+                    <motion.div 
+                      key={dest.id}
+                      whileHover={{ y: -8 }}
+                      onClick={() => navigate(`/destination/${dest.id}`)}
+                      style={{ 
+                        flex: '1', 
+                        height: '500px', 
+                        position: 'relative',
+                        borderRadius: '24px',
+                        overflow: 'hidden',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <img src={dest.heroImage} alt={dest.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)' }} />
+                      <div style={{ position: 'absolute', bottom: '32px', left: '32px' }}>
+                        <Label style={{ display: 'block', color: 'var(--color-accent-gold)', marginBottom: '8px' }}>{dest.country}</Label>
+                        <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', marginBottom: '8px' }}>{dest.name}</h3>
+                        <p style={{ color: 'rgba(255,255,255,0.8)', maxWidth: '400px' }}>{dest.tagLine}</p>
                       </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* TRENDING SECTION */}
+            {trending.length > 0 && (
+              <section>
+                <Heading as="h2" style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', marginBottom: '32px' }}>Trending Now</Heading>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
+                  {trending.map(dest => (
+                    <motion.div
+                      key={dest.id}
+                      whileHover={{ y: -4 }}
+                      onClick={() => navigate(`/destination/${dest.id}`)}
+                      style={{
+                        height: '340px',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        position: 'relative',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <img src={dest.heroImage} alt={dest.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%)' }} />
+                      <div style={{ position: 'absolute', bottom: '24px', left: '24px' }}>
+                        <Label style={{ color: 'var(--color-accent-gold)', fontSize: '0.75rem', marginBottom: '4px' }}>{dest.country}</Label>
+                        <h4 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{dest.name}</h4>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* REGIONS SECTION */}
+            {regions.length > 0 && (
+              <section>
+                <Heading as="h2" style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', marginBottom: '32px' }}>More Destinations</Heading>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px' }}>
+                  {regions.map(dest => (
+                    <motion.div
+                      key={dest.id}
+                      whileHover={{ scale: 1.02 }}
+                      onClick={() => navigate(`/destination/${dest.id}`)}
+                      style={{
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <div style={{ height: '140px', width: '100%' }}>
+                        <img src={dest.heroImage} alt={dest.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                      <div style={{ padding: '16px' }}>
+                        <Label style={{ color: 'var(--color-accent-gold)', fontSize: '0.7rem', marginBottom: '4px' }}>{dest.country}</Label>
+                        <div style={{ fontSize: '1rem', fontWeight: 600 }}>{dest.name}</div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
+            )}
+
           </div>
-          
-        </div>
+        )}
       </div>
     </div>
   );
