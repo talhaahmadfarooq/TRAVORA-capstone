@@ -2,6 +2,43 @@ import type { Destination, Flight, Stay, Trip, User, JourneySearch, FavoritesSta
 
 export const mockDestinations: Destination[] = [
   {
+    id: 'lahore',
+    name: 'Lahore',
+    country: 'Pakistan',
+    tagLine: 'The Heart of the Mughal Empire',
+    description: 'A vibrant tapestry of Mughal grandeur, bustling bazaars, and poetic literary history. The city breathes with centuries of cultural wealth, illuminated by warm evening sunlight.',
+    heroImage: 'https://images.unsplash.com/photo-1627885376175-14f1ebda4726?auto=format&fit=crop&w=1600&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1596515886364-77e8a9390237?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1577903803154-8eeb96645db7?auto=format&fit=crop&w=1000&q=80',
+    ],
+    coordinates: [31.5204, 74.3587],
+    category: 'Cultural Heritage',
+    mood: 'Historic & Poetic',
+    bestTime: 'October - March',
+    language: 'Urdu / Punjabi',
+    currency: 'PKR (Rs)',
+    timezone: 'GMT+5',
+    weather: { temp: 22, condition: 'Golden Sunset', humidity: 45, wind: '5 km/h' },
+    experiences: [
+      {
+        id: 'exp-lhr-1',
+        title: 'Badshahi Mosque at Dusk',
+        description: 'Explore the vast red sandstone courtyards of the iconic 17th-century mosque as the call to prayer echoes through the warm evening air.',
+        image: 'https://images.unsplash.com/photo-1627885376175-14f1ebda4726?auto=format&fit=crop&w=800&q=80',
+        duration: '2 hours',
+      },
+      {
+        id: 'exp-lhr-2',
+        title: 'Walled City & Shahi Hammam',
+        description: 'Walk through the narrow historic gates to discover restored Mughal bathhouses and centuries-old Havelis.',
+        image: 'https://images.unsplash.com/photo-1596515886364-77e8a9390237?auto=format&fit=crop&w=800&q=80',
+        duration: '3 hours',
+      }
+    ],
+    recommendedStayIds: [],
+  },
+  {
     id: 'tokyo',
     name: 'Tokyo',
     country: 'Japan',
