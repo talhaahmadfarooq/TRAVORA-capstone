@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Compass, MapPin, Plane, Hotel, Navigation } from 'lucide-react';
+import { Home, Compass, Plane, Hotel, Navigation } from 'lucide-react';
 import { useNavigation } from '../../context/NavigationContext';
 
 const NAV_ITEMS = [
   { name: 'Home', path: '/', icon: Home },
   { name: 'Explore', path: '/explore', icon: Compass },
-  { name: 'Destinations', path: '/destinations', icon: MapPin },
   { name: 'Flights', path: '/flights', icon: Plane },
   { name: 'Stays', path: '/stays', icon: Hotel },
   { name: 'Trips', path: '/trips', icon: Navigation },

@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { mockDestinations } from '../data/mockData';
 import { useTrip } from '../context/TripContext';
 import { useToast } from '../components/ui/Toast';
 import { ImageWithFallback } from '../components/ui/ImageWithFallback';
-import { Search, ArrowRight, Bookmark } from 'lucide-react';
+import { Search, Bookmark } from 'lucide-react';
 import { GlassSurface } from '../components/ui/GlassSurface';
-import { GlassButton } from '../components/ui/GlassButton';
 import { GlassInput } from '../components/ui/GlassInput';
 import { Display, Heading, Body, Meta, Label } from '../components/ui/Typography';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -145,15 +143,9 @@ export function ExplorePage() {
                 <Display style={{ textTransform: 'uppercase', marginBottom: '24px' }}>
                   {activeDestination.name}
                 </Display>
-                <Body style={{ maxWidth: '450px', marginBottom: '40px', color: 'rgba(255,255,255,0.9)' }}>
+                <Body style={{ maxWidth: '450px', marginBottom: '24px', color: 'rgba(255,255,255,0.9)' }}>
                   {activeDestination.description}
                 </Body>
-                
-                <Link to={`/destinations/${activeDestination.id}`}>
-                  <GlassButton variant="primary" icon={<ArrowRight size={18} />}>
-                    Explore
-                  </GlassButton>
-                </Link>
               </motion.div>
             </AnimatePresence>
           </div>

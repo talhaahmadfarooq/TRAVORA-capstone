@@ -68,7 +68,7 @@ export function FavoritesPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '32px' }}>
             {favDestinations.map((dest, idx) => (
               <motion.div key={dest.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}>
-                <Link to={`/destinations/${dest.id}`} style={{ display: 'block' }}>
+                <Link to="/explore" style={{ display: 'block' }}>
                   <GlassSurface hoverEffect style={{ padding: '16px' }}>
                     <ImageWithFallback src={dest.heroImage} style={{ width: '100%', height: '240px', borderRadius: '12px', marginBottom: '24px', objectFit: 'cover' }} />
                     <Heading as="h3" style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{dest.name}</Heading>
