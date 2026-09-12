@@ -1,41 +1,64 @@
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { useLocation, useNavigationType } from 'react-router-dom';
 
 /**
  * Manages scroll restoration across route changes.
- * Remembers the scroll position for each page and restores it when returning.
+ * Uses location.key to completely isolate scroll position per history entry.
  */
 export function ScrollToTop() {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const navType = useNavigationType();
+  const scrollMap = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
-    // Save scroll position for the current path continuously
+    // Disable native browser scroll restoration to prevent conflicts
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
+
+  // Save scroll position on unmount or before route change
+  useEffect(() => {
     const handleScroll = () => {
-      sessionStorage.setItem(`scroll-${pathname}`, window.scrollY.toString());
+      scrollMap.current.set(location.key, window.scrollY);
     };
-    
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [pathname]);
-
-  useEffect(() => {
-    const saved = sessionStorage.getItem(`scroll-${pathname}`);
-    const pos = saved ? parseInt(saved, 10) : 0;
     
-    const restore = () => {
-      window.scrollTo({ top: pos, left: 0, behavior: 'instant' });
-      // Fallbacks
-      if (pos === 0) {
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      }
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      // Ensure we save the exact position right before leaving this route
+      scrollMap.current.set(location.key, window.scrollY);
     };
+  }, [location.key]);
 
-    restore();
-    // In case of reflows/image loads, try again next frame
-    const raf = requestAnimationFrame(restore);
-    return () => cancelAnimationFrame(raf);
-  }, [pathname]);
+  // Restore scroll position on mount/route change
+  useEffect(() => {
+    // If it's a completely new navigation (PUSH or REPLACE), we always start at top
+    if (navType === 'PUSH' || navType === 'REPLACE') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      return;
+    }
+
+    // If it's a POP (browser back/forward), restore the exact saved position for this key
+    if (navType === 'POP') {
+      const savedPos = scrollMap.current.get(location.key) || 0;
+      
+      const restore = () => {
+        window.scrollTo({ top: savedPos, left: 0, behavior: 'instant' });
+      };
+
+      restore();
+      // Try again next frame in case DOM hasn't fully rendered height yet
+      const raf = requestAnimationFrame(restore);
+      const timeout = setTimeout(restore, 50); // Fallback for delayed image loads
+      
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(timeout);
+      };
+    }
+  }, [location.key, navType]);
 
   return null;
 }

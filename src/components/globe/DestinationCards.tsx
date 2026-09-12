@@ -3,6 +3,7 @@ import { GLOBE_LOCATIONS } from './GlobeScene';
 import { GlassSurface } from '../ui/GlassSurface';
 import { Heading, Meta } from '../ui/Typography';
 import { Link } from 'react-router-dom';
+import { mockDestinations } from '../../data/mockData';
 
 interface DestinationCardsProps {
   appState: string;
@@ -10,15 +11,6 @@ interface DestinationCardsProps {
   onSelect: (id: string) => void;
   isOpen: boolean;
 }
-
-const LOCATION_IMAGES: Record<string, string> = {
-  tokyo: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=600&q=80',
-  paris: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80',
-  newyork: 'https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=600&q=80',
-  dubai: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=600&q=80',
-  istanbul: 'https://images.unsplash.com/photo-1522083165195-3424ed129620?auto=format&fit=crop&w=600&q=80',
-  bali: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80',
-};
 
 export function DestinationCards({ appState, selectedId, onSelect, isOpen }: DestinationCardsProps) {
   if (appState !== 'EXPLORE') return null;
@@ -42,7 +34,8 @@ export function DestinationCards({ appState, selectedId, onSelect, isOpen }: Des
           >
             {GLOBE_LOCATIONS.slice(0, 3).map((loc, i) => {
               const isSelected = selectedId === loc.id;
-              const imageUrl = LOCATION_IMAGES[loc.id] || LOCATION_IMAGES.tokyo;
+              const destData = mockDestinations.find(d => d.id === loc.id);
+              const imageUrl = destData?.heroImage || '';
               
               return (
                 <motion.div 

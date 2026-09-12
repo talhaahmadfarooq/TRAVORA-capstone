@@ -1,4 +1,4 @@
-﻿export interface Experience {
+export interface Experience {
   id: string;
   title: string;
   description: string;
@@ -20,6 +20,7 @@ export interface Destination {
   tagLine: string;
   description: string;
   heroImage: string;
+  mastheadImage?: string;
   gallery: string[];
   coordinates: [number, number]; // [lat, lng]
   category: string;
@@ -30,6 +31,9 @@ export interface Destination {
   timezone: string;
   weather: DestinationWeather;
   experiences: Experience[];
+  places?: Experience[];
+  food?: Experience[];
+  nightlife?: Experience[];
   recommendedStayIds: string[];
 }
 
